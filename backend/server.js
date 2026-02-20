@@ -29,20 +29,16 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /* =========================
-   MYSQL CONNECTION
+   MYSQL CONNECTION (Railway)
 ========================= */
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "3289",
-  database: "projectstore",
-});
+
+const db = mysql.createConnection(process.env.MYSQL_URL);
 
 db.connect((err) => {
   if (err) {
-    console.log("❌ DB Connection Error:", err);
+    console.error("❌ Database connection failed:", err);
   } else {
-    console.log("✅ MySQL Connected");
+    console.log("✅ Connected to Railway MySQL");
   }
 });
 
@@ -71,7 +67,6 @@ app.post("/projects", (req, res) => {
         console.log("PROJECT INSERT ERROR:", err);
         return res.status(500).json(err);
       }
-      console.log("✅ Project Inserted");
       res.json({ message: "Project added", id: result.insertId });
     }
   );
@@ -89,7 +84,6 @@ app.put("/projects/:id", (req, res) => {
         console.log("PROJECT UPDATE ERROR:", err);
         return res.status(500).json(err);
       }
-      console.log("✅ Project Updated");
       res.json({ message: "Project updated" });
     }
   );
@@ -101,7 +95,6 @@ app.delete("/projects/:id", (req, res) => {
       console.log("PROJECT DELETE ERROR:", err);
       return res.status(500).json(err);
     }
-    console.log("✅ Project Deleted");
     res.json({ message: "Project deleted" });
   });
 });
@@ -120,11 +113,7 @@ app.get("/portfolio", (req, res) => {
   });
 });
 
-/* ADD PORTFOLIO */
 app.post("/portfolio", upload.single("image"), (req, res) => {
-  console.log("BODY:", req.body);
-  console.log("FILE:", req.file);
-
   const { title, description, link } = req.body;
   const image = req.file ? `/uploads/${req.file.filename}` : null;
 
@@ -133,17 +122,14 @@ app.post("/portfolio", upload.single("image"), (req, res) => {
     [title, description, link, image],
     (err) => {
       if (err) {
-        console.log("❌ PORTFOLIO INSERT ERROR:", err);
+        console.log("PORTFOLIO INSERT ERROR:", err);
         return res.status(500).json(err);
       }
-
-      console.log("✅ Portfolio Inserted Successfully");
       res.json({ message: "Portfolio project added" });
     }
   );
 });
 
-/* UPDATE PORTFOLIO */
 app.put("/portfolio/:id", upload.single("image"), (req, res) => {
   const { title, description, link } = req.body;
   const id = req.params.id;
@@ -156,11 +142,9 @@ app.put("/portfolio/:id", upload.single("image"), (req, res) => {
       [title, description, link, image, id],
       (err) => {
         if (err) {
-          console.log("❌ PORTFOLIO UPDATE ERROR:", err);
+          console.log("PORTFOLIO UPDATE ERROR:", err);
           return res.status(500).json(err);
         }
-
-        console.log("✅ Portfolio Updated (with image)");
         res.json({ message: "Portfolio updated" });
       }
     );
@@ -170,11 +154,9 @@ app.put("/portfolio/:id", upload.single("image"), (req, res) => {
       [title, description, link, id],
       (err) => {
         if (err) {
-          console.log("❌ PORTFOLIO UPDATE ERROR:", err);
+          console.log("PORTFOLIO UPDATE ERROR:", err);
           return res.status(500).json(err);
         }
-
-        console.log("✅ Portfolio Updated (no image)");
         res.json({ message: "Portfolio updated" });
       }
     );
@@ -184,11 +166,9 @@ app.put("/portfolio/:id", upload.single("image"), (req, res) => {
 app.delete("/portfolio/:id", (req, res) => {
   db.query("DELETE FROM portfolio WHERE id=?", [req.params.id], (err) => {
     if (err) {
-      console.log("❌ PORTFOLIO DELETE ERROR:", err);
+      console.log("PORTFOLIO DELETE ERROR:", err);
       return res.status(500).json(err);
     }
-
-    console.log("✅ Portfolio Deleted");
     res.json({ message: "Portfolio project deleted" });
   });
 });
@@ -223,17 +203,17 @@ app.put("/resume", (req, res) => {
         console.log("RESUME UPDATE ERROR:", err);
         return res.status(500).json(err);
       }
-
-      console.log("✅ Resume Updated");
       res.json({ message: "Resume updated" });
     }
   );
 });
 
 /* =========================
-   START SERVER
+   START SERVER (IMPORTANT FOR RENDER)
 ========================= */
 
-app.listen(5000, () => {
-  console.log("🚀 Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
