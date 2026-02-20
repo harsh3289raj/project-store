@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "../App.css";
 
+const API = "https://angelic-creation-production-d8b1.up.railway.app";
+
 function AdminPortfolio() {
   const [portfolio, setPortfolio] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -13,7 +15,7 @@ function AdminPortfolio() {
   });
 
   const loadPortfolio = async () => {
-    const res = await fetch("http://localhost:5000/portfolio");
+    const res = await fetch(`${API}/portfolio`);
     const data = await res.json();
     setPortfolio(data);
   };
@@ -27,16 +29,19 @@ function AdminPortfolio() {
     formData.append("title", form.title);
     formData.append("description", form.description);
     formData.append("link", form.link);
-    formData.append("image", form.image);
+
+    if (form.image) {
+      formData.append("image", form.image);
+    }
 
     if (editingId) {
-      await fetch(`http://localhost:5000/portfolio/${editingId}`, {
+      await fetch(`${API}/portfolio/${editingId}`, {
         method: "PUT",
         body: formData
       });
       setEditingId(null);
     } else {
-      await fetch("http://localhost:5000/portfolio", {
+      await fetch(`${API}/portfolio`, {
         method: "POST",
         body: formData
       });
@@ -63,7 +68,7 @@ function AdminPortfolio() {
   };
 
   const deletePortfolio = async (id) => {
-    await fetch(`http://localhost:5000/portfolio/${id}`, {
+    await fetch(`${API}/portfolio/${id}`, {
       method: "DELETE"
     });
     loadPortfolio();
@@ -129,7 +134,7 @@ function AdminPortfolio() {
 
                 {p.image && (
                   <img
-                    src={`http://localhost:5000${p.image}`}
+                    src={`${API}${p.image}`}
                     alt=""
                     style={{ width: "120px", borderRadius: "6px" }}
                   />

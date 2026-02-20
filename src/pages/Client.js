@@ -12,7 +12,7 @@ function Client() {
   const [showContact, setShowContact] = useState(false);   // ✅ Contact Modal
 
   useEffect(() => {
-    fetch("http://localhost:5000/projects")
+    fetch("https://angelic-creation-production-d8b1.up.railway.app/projects")
       .then(res => res.json())
       .then(data => setProjects(data))
       .catch(err => console.log(err));

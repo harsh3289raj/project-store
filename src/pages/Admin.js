@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "../App.css";
 
+const API = "https://angelic-creation-production-d8b1.up.railway.app";
+
 function Admin() {
   const [projects, setProjects] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -18,7 +20,7 @@ function Admin() {
   };
 
   const loadProjects = async () => {
-    const res = await fetch("http://localhost:5000/projects");
+    const res = await fetch(`${API}/projects`);
     const data = await res.json();
     setProjects(data);
   };
@@ -30,14 +32,14 @@ function Admin() {
   /* ADD / UPDATE STORE PROJECT */
   const handleSubmit = async () => {
     if (editingId) {
-      await fetch(`http://localhost:5000/projects/${editingId}`, {
+      await fetch(`${API}/projects/${editingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form)
       });
       setEditingId(null);
     } else {
-      await fetch("http://localhost:5000/projects", {
+      await fetch(`${API}/projects`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form)
@@ -59,7 +61,7 @@ function Admin() {
   };
 
   const deleteProject = async (id) => {
-    await fetch(`http://localhost:5000/projects/${id}`, {
+    await fetch(`${API}/projects/${id}`, {
       method: "DELETE"
     });
     loadProjects();
@@ -84,7 +86,7 @@ function Admin() {
             className="primary-btn"
             onClick={() => window.location.href = "/admin/portfolio"}
           >
-           Portfolio Projects
+            Portfolio Projects
           </button>
         </div>
 

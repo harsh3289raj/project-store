@@ -11,7 +11,7 @@ function Portfolio() {
 
   // FETCH PORTFOLIO FROM BACKEND
   useEffect(() => {
-    fetch("http://localhost:5000/portfolio")
+    fetch("https://angelic-creation-production-d8b1.up.railway.app/portfolio")
       .then((res) => res.json())
       .then((data) => setPortfolio(data))
       .catch((err) => console.log("Portfolio Fetch Error:", err));
@@ -115,7 +115,7 @@ function Portfolio() {
                 {/* IMAGE */}
                 {p.image && (
                   <img
-                    src={`http://localhost:5000${p.image}`}
+                    src={`https://angelic-creation-production-d8b1.up.railway.app/portfolio${p.image}`}
                     alt={p.title}
                     style={{
                       width: "100%",
