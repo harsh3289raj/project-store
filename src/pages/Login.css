@@ -1,0 +1,96 @@
+.login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-image: url("../assets/Luxury Navy Background.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+/* GLASS CARD */
+.login-box {
+  width: 340px;
+  padding: 40px 30px;
+  border-radius: 20px;
+  text-align: center;
+
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.5);
+  color: white;
+}
+
+.login-title {
+  margin-bottom: 25px;
+}
+
+/* INPUT */
+.login-input {
+  width: 100%;
+  margin-bottom: 18px;
+  padding: 10px;
+  border: none;
+  border-bottom: 1px solid white;
+  background: transparent;
+  color: white;
+  outline: none;
+}
+
+.login-input::placeholder {
+  color: rgba(255,255,255,0.9);
+}
+
+/* OPTIONS */
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+/* SELECT */
+.login-select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: none;
+}
+
+/* BUTTON */
+.login-button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  background: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* REGISTER */
+.register-text {
+  margin-top: 15px;
+  font-size: 13px;
+}
+.link-text {
+  cursor: pointer;
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.link-text:hover {
+  opacity: 0.8;
+}
+
+.register-text {
+  margin-top: 15px;
+  cursor: pointer;
+  color: white;
+}
+
+.register-text:hover {
+  text-decoration: underline;
+}

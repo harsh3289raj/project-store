@@ -1,0 +1,23 @@
+.project-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 250px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  text-align: center;
+  transition: 0.3s;
+}
+
+.project-card:hover {
+  transform: translateY(-5px);
+}
+
+.buy-btn {
+  margin-top: 10px;
+  padding: 10px 15px;
+  border: none;
+  background: #25d366;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}

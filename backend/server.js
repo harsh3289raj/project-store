@@ -1,0 +1,239 @@
+const express = require("express");
+const mysql = require("mysql2");
+const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+/* =========================
+   STATIC UPLOAD FOLDER
+========================= */
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+/* =========================
+   MULTER CONFIGURATION
+========================= */
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  }
+});
+
+const upload = multer({ storage });
+
+/* =========================
+   MYSQL CONNECTION
+========================= */
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "3289",
+  database: "projectstore",
+});
+
+db.connect((err) => {
+  if (err) {
+    console.log("❌ DB Connection Error:", err);
+  } else {
+    console.log("✅ MySQL Connected");
+  }
+});
+
+/* =========================
+   PROJECT ROUTES
+========================= */
+
+app.get("/projects", (req, res) => {
+  db.query("SELECT * FROM projects ORDER BY id DESC", (err, result) => {
+    if (err) {
+      console.log("PROJECT FETCH ERROR:", err);
+      return res.status(500).json(err);
+    }
+    res.json(result);
+  });
+});
+
+app.post("/projects", (req, res) => {
+  const { title, tech, price, image } = req.body;
+
+  db.query(
+    "INSERT INTO projects (title, tech, price, image) VALUES (?, ?, ?, ?)",
+    [title, tech, price, image],
+    (err, result) => {
+      if (err) {
+        console.log("PROJECT INSERT ERROR:", err);
+        return res.status(500).json(err);
+      }
+      console.log("✅ Project Inserted");
+      res.json({ message: "Project added", id: result.insertId });
+    }
+  );
+});
+
+app.put("/projects/:id", (req, res) => {
+  const { title, tech, price, image } = req.body;
+  const id = req.params.id;
+
+  db.query(
+    "UPDATE projects SET title=?, tech=?, price=?, image=? WHERE id=?",
+    [title, tech, price, image, id],
+    (err) => {
+      if (err) {
+        console.log("PROJECT UPDATE ERROR:", err);
+        return res.status(500).json(err);
+      }
+      console.log("✅ Project Updated");
+      res.json({ message: "Project updated" });
+    }
+  );
+});
+
+app.delete("/projects/:id", (req, res) => {
+  db.query("DELETE FROM projects WHERE id=?", [req.params.id], (err) => {
+    if (err) {
+      console.log("PROJECT DELETE ERROR:", err);
+      return res.status(500).json(err);
+    }
+    console.log("✅ Project Deleted");
+    res.json({ message: "Project deleted" });
+  });
+});
+
+/* =========================
+   PORTFOLIO ROUTES
+========================= */
+
+app.get("/portfolio", (req, res) => {
+  db.query("SELECT * FROM portfolio ORDER BY id DESC", (err, result) => {
+    if (err) {
+      console.log("PORTFOLIO FETCH ERROR:", err);
+      return res.status(500).json(err);
+    }
+    res.json(result);
+  });
+});
+
+/* ADD PORTFOLIO */
+app.post("/portfolio", upload.single("image"), (req, res) => {
+  console.log("BODY:", req.body);
+  console.log("FILE:", req.file);
+
+  const { title, description, link } = req.body;
+  const image = req.file ? `/uploads/${req.file.filename}` : null;
+
+  db.query(
+    "INSERT INTO portfolio (title, description, link, image) VALUES (?, ?, ?, ?)",
+    [title, description, link, image],
+    (err) => {
+      if (err) {
+        console.log("❌ PORTFOLIO INSERT ERROR:", err);
+        return res.status(500).json(err);
+      }
+
+      console.log("✅ Portfolio Inserted Successfully");
+      res.json({ message: "Portfolio project added" });
+    }
+  );
+});
+
+/* UPDATE PORTFOLIO */
+app.put("/portfolio/:id", upload.single("image"), (req, res) => {
+  const { title, description, link } = req.body;
+  const id = req.params.id;
+
+  if (req.file) {
+    const image = `/uploads/${req.file.filename}`;
+
+    db.query(
+      "UPDATE portfolio SET title=?, description=?, link=?, image=? WHERE id=?",
+      [title, description, link, image, id],
+      (err) => {
+        if (err) {
+          console.log("❌ PORTFOLIO UPDATE ERROR:", err);
+          return res.status(500).json(err);
+        }
+
+        console.log("✅ Portfolio Updated (with image)");
+        res.json({ message: "Portfolio updated" });
+      }
+    );
+  } else {
+    db.query(
+      "UPDATE portfolio SET title=?, description=?, link=? WHERE id=?",
+      [title, description, link, id],
+      (err) => {
+        if (err) {
+          console.log("❌ PORTFOLIO UPDATE ERROR:", err);
+          return res.status(500).json(err);
+        }
+
+        console.log("✅ Portfolio Updated (no image)");
+        res.json({ message: "Portfolio updated" });
+      }
+    );
+  }
+});
+
+app.delete("/portfolio/:id", (req, res) => {
+  db.query("DELETE FROM portfolio WHERE id=?", [req.params.id], (err) => {
+    if (err) {
+      console.log("❌ PORTFOLIO DELETE ERROR:", err);
+      return res.status(500).json(err);
+    }
+
+    console.log("✅ Portfolio Deleted");
+    res.json({ message: "Portfolio project deleted" });
+  });
+});
+
+/* =========================
+   RESUME ROUTES
+========================= */
+
+app.get("/resume", (req, res) => {
+  db.query("SELECT * FROM resume LIMIT 1", (err, result) => {
+    if (err) {
+      console.log("RESUME FETCH ERROR:", err);
+      return res.status(500).json(err);
+    }
+
+    if (result.length === 0) {
+      return res.json({ resume_link: "" });
+    }
+
+    res.json(result[0]);
+  });
+});
+
+app.put("/resume", (req, res) => {
+  const { resume_link } = req.body;
+
+  db.query(
+    "UPDATE resume SET resume_link=? WHERE id=1",
+    [resume_link],
+    (err) => {
+      if (err) {
+        console.log("RESUME UPDATE ERROR:", err);
+        return res.status(500).json(err);
+      }
+
+      console.log("✅ Resume Updated");
+      res.json({ message: "Resume updated" });
+    }
+  );
+});
+
+/* =========================
+   START SERVER
+========================= */
+
+app.listen(5000, () => {
+  console.log("🚀 Server running on port 5000");
+});
