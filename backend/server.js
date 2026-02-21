@@ -15,7 +15,7 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 /* =========================
-   MULTER CONFIGURATION
+   MULTER CONFIG
 ========================= */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -31,15 +31,72 @@ const upload = multer({ storage });
 /* =========================
    MYSQL CONNECTION (Railway)
 ========================= */
-
 const db = mysql.createConnection(process.env.MYSQL_URL);
 
 db.connect((err) => {
   if (err) {
-    console.error("❌ Database connection failed:", err);
+    console.error("❌ DB Connection Failed:", err);
   } else {
     console.log("✅ Connected to Railway MySQL");
   }
+});
+
+/* =========================
+   AUTH ROUTES
+========================= */
+
+// REGISTER USER
+app.post("/register", (req, res) => {
+  const { name, email, password } = req.body;
+
+  db.query(
+    "INSERT INTO users (name,email,password) VALUES (?,?,?)",
+    [name, email, password],
+    (err) => {
+      if (err) {
+        return res.status(400).json({
+          message: "User already exists"
+        });
+      }
+
+      res.json({ message: "Registered successfully" });
+    }
+  );
+});
+
+// LOGIN USER + ADMIN PROTECTION
+app.post("/login", (req, res) => {
+  const { email, password, role } = req.body;
+
+  // ✅ ONLY THIS EMAIL CAN ACCESS ADMIN
+  if (role === "admin" && email !== "harsh3289raj@gmail.com") {
+    return res.status(403).json({
+      message: "Cannot login through Admin"
+    });
+  }
+
+  db.query(
+    "SELECT * FROM users WHERE email=?",
+    [email],
+    (err, result) => {
+
+      if (err)
+        return res.status(500).json({ message: "Server error" });
+
+      if (result.length === 0)
+        return res.status(400).json({ message: "User not found" });
+
+      const user = result[0];
+
+      if (user.password !== password)
+        return res.status(400).json({ message: "Wrong password" });
+
+      res.json({
+        message: "Login successful",
+        user
+      });
+    }
+  );
 });
 
 /* =========================
@@ -48,10 +105,7 @@ db.connect((err) => {
 
 app.get("/projects", (req, res) => {
   db.query("SELECT * FROM projects ORDER BY id DESC", (err, result) => {
-    if (err) {
-      console.log("PROJECT FETCH ERROR:", err);
-      return res.status(500).json(err);
-    }
+    if (err) return res.status(500).json(err);
     res.json(result);
   });
 });
@@ -60,43 +114,41 @@ app.post("/projects", (req, res) => {
   const { title, tech, price, image } = req.body;
 
   db.query(
-    "INSERT INTO projects (title, tech, price, image) VALUES (?, ?, ?, ?)",
+    "INSERT INTO projects(title,tech,price,image) VALUES(?,?,?,?)",
     [title, tech, price, image],
     (err, result) => {
-      if (err) {
-        console.log("PROJECT INSERT ERROR:", err);
-        return res.status(500).json(err);
-      }
-      res.json({ message: "Project added", id: result.insertId });
+      if (err) return res.status(500).json(err);
+
+      res.json({
+        message: "Project added",
+        id: result.insertId
+      });
     }
   );
 });
 
 app.put("/projects/:id", (req, res) => {
   const { title, tech, price, image } = req.body;
-  const id = req.params.id;
 
   db.query(
-    "UPDATE projects SET title=?, tech=?, price=?, image=? WHERE id=?",
-    [title, tech, price, image, id],
+    "UPDATE projects SET title=?,tech=?,price=?,image=? WHERE id=?",
+    [title, tech, price, image, req.params.id],
     (err) => {
-      if (err) {
-        console.log("PROJECT UPDATE ERROR:", err);
-        return res.status(500).json(err);
-      }
+      if (err) return res.status(500).json(err);
       res.json({ message: "Project updated" });
     }
   );
 });
 
 app.delete("/projects/:id", (req, res) => {
-  db.query("DELETE FROM projects WHERE id=?", [req.params.id], (err) => {
-    if (err) {
-      console.log("PROJECT DELETE ERROR:", err);
-      return res.status(500).json(err);
+  db.query(
+    "DELETE FROM projects WHERE id=?",
+    [req.params.id],
+    (err) => {
+      if (err) return res.status(500).json(err);
+      res.json({ message: "Project deleted" });
     }
-    res.json({ message: "Project deleted" });
-  });
+  );
 });
 
 /* =========================
@@ -105,10 +157,7 @@ app.delete("/projects/:id", (req, res) => {
 
 app.get("/portfolio", (req, res) => {
   db.query("SELECT * FROM portfolio ORDER BY id DESC", (err, result) => {
-    if (err) {
-      console.log("PORTFOLIO FETCH ERROR:", err);
-      return res.status(500).json(err);
-    }
+    if (err) return res.status(500).json(err);
     res.json(result);
   });
 });
@@ -118,45 +167,35 @@ app.post("/portfolio", upload.single("image"), (req, res) => {
   const image = req.file ? `/uploads/${req.file.filename}` : null;
 
   db.query(
-    "INSERT INTO portfolio (title, description, link, image) VALUES (?, ?, ?, ?)",
+    "INSERT INTO portfolio(title,description,link,image) VALUES(?,?,?,?)",
     [title, description, link, image],
     (err) => {
-      if (err) {
-        console.log("PORTFOLIO INSERT ERROR:", err);
-        return res.status(500).json(err);
-      }
-      res.json({ message: "Portfolio project added" });
+      if (err) return res.status(500).json(err);
+      res.json({ message: "Portfolio added" });
     }
   );
 });
 
 app.put("/portfolio/:id", upload.single("image"), (req, res) => {
   const { title, description, link } = req.body;
-  const id = req.params.id;
 
   if (req.file) {
     const image = `/uploads/${req.file.filename}`;
 
     db.query(
-      "UPDATE portfolio SET title=?, description=?, link=?, image=? WHERE id=?",
-      [title, description, link, image, id],
+      "UPDATE portfolio SET title=?,description=?,link=?,image=? WHERE id=?",
+      [title, description, link, image, req.params.id],
       (err) => {
-        if (err) {
-          console.log("PORTFOLIO UPDATE ERROR:", err);
-          return res.status(500).json(err);
-        }
+        if (err) return res.status(500).json(err);
         res.json({ message: "Portfolio updated" });
       }
     );
   } else {
     db.query(
-      "UPDATE portfolio SET title=?, description=?, link=? WHERE id=?",
-      [title, description, link, id],
+      "UPDATE portfolio SET title=?,description=?,link=? WHERE id=?",
+      [title, description, link, req.params.id],
       (err) => {
-        if (err) {
-          console.log("PORTFOLIO UPDATE ERROR:", err);
-          return res.status(500).json(err);
-        }
+        if (err) return res.status(500).json(err);
         res.json({ message: "Portfolio updated" });
       }
     );
@@ -164,13 +203,14 @@ app.put("/portfolio/:id", upload.single("image"), (req, res) => {
 });
 
 app.delete("/portfolio/:id", (req, res) => {
-  db.query("DELETE FROM portfolio WHERE id=?", [req.params.id], (err) => {
-    if (err) {
-      console.log("PORTFOLIO DELETE ERROR:", err);
-      return res.status(500).json(err);
+  db.query(
+    "DELETE FROM portfolio WHERE id=?",
+    [req.params.id],
+    (err) => {
+      if (err) return res.status(500).json(err);
+      res.json({ message: "Portfolio deleted" });
     }
-    res.json({ message: "Portfolio project deleted" });
-  });
+  );
 });
 
 /* =========================
@@ -179,16 +219,9 @@ app.delete("/portfolio/:id", (req, res) => {
 
 app.get("/resume", (req, res) => {
   db.query("SELECT * FROM resume LIMIT 1", (err, result) => {
-    if (err) {
-      console.log("RESUME FETCH ERROR:", err);
-      return res.status(500).json(err);
-    }
+    if (err) return res.status(500).json(err);
 
-    if (result.length === 0) {
-      return res.json({ resume_link: "" });
-    }
-
-    res.json(result[0]);
+    res.json(result[0] || { resume_link: "" });
   });
 });
 
@@ -199,19 +232,15 @@ app.put("/resume", (req, res) => {
     "UPDATE resume SET resume_link=? WHERE id=1",
     [resume_link],
     (err) => {
-      if (err) {
-        console.log("RESUME UPDATE ERROR:", err);
-        return res.status(500).json(err);
-      }
+      if (err) return res.status(500).json(err);
       res.json({ message: "Resume updated" });
     }
   );
 });
 
 /* =========================
-   START SERVER (IMPORTANT FOR RENDER)
+   SERVER START
 ========================= */
-
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
