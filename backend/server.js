@@ -18,10 +18,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "super_secret_key";
 /* ================= CORS (VERY IMPORTANT) ================= */
 
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://your-vercel-app.vercel.app"   // ⭐ CHANGE THIS
-  ],
+  origin: true,
   credentials: true
 }));
 
